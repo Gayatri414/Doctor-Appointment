@@ -6,7 +6,6 @@ const Navbar = () => {
 
   const [showMenu, setShowMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-
   const [token, setToken] = useState(localStorage.getItem("token") || null);
 
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" }
   ];
 
-  //  Logout
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
@@ -38,13 +36,13 @@ const Navbar = () => {
       />
 
       {/* Desktop Menu */}
-      <ul className='hidden lg:flex items-center gap-4 xl:gap-8 font-medium'>
+      <ul className='hidden lg:flex items-center gap-6 font-medium'>
         {navLinks.map((link, index) => (
           <li key={index}>
             <NavLink to={link.path}>
               {({ isActive }) => (
                 <div className='flex flex-col items-center group cursor-pointer'>
-                  <p className={`whitespace-nowrap text-sm lg:text-base ${
+                  <p className={`text-sm lg:text-base ${
                     isActive ? "text-blue-500" : "text-gray-700 group-hover:text-blue-500"
                   }`}>
                     {link.name}
@@ -62,16 +60,15 @@ const Navbar = () => {
       {/* Right Side */}
       <div className='flex items-center gap-4 relative'>
 
-        {/*  NOT Logged In */}
+        {/* NOT Logged In */}
         {!token ? (
           <button 
             onClick={() => navigate('/login')}
-            className='bg-blue-500 text-white px-6 py-2 rounded-full hidden md:block hover:bg-blue-600 transition'
+            className='bg-blue-500 text-white px-5 py-2 rounded-full hidden md:block hover:bg-blue-600 transition'
           >
             Create Account
           </button>
         ) : (
-          // Logged In UI
           <div 
             className='hidden md:flex items-center gap-2 cursor-pointer'
             onClick={() => setShowDropdown(prev => !prev)}
@@ -81,7 +78,6 @@ const Navbar = () => {
               className='w-8 h-8 rounded-full object-cover' 
               alt="profile" 
             />
-
             <img 
               src={assets.dropdown_icon} 
               className={`w-3 transition-transform ${
@@ -90,10 +86,9 @@ const Navbar = () => {
               alt="dropdown" 
             />
 
-            {/*  Dropdown Menu */}
+            {/* Dropdown */}
             {showDropdown && (
               <div className='absolute top-12 right-0 bg-white shadow-lg rounded-md py-3 w-40 z-50'>
-                
                 <p 
                   onClick={() => {
                     navigate('/my-profile');
@@ -122,15 +117,14 @@ const Navbar = () => {
                 >
                   Logout
                 </p>
-
               </div>
             )}
           </div>
         )}
 
-        {/* Hamburger */}
+        {/* Hamburger (Mobile Only) */}
         <button 
-          className='md:hidden text-2xl'
+          className='lg:hidden text-2xl'
           onClick={() => setShowMenu(true)}
         >
           ☰
@@ -147,10 +141,11 @@ const Navbar = () => {
       )}
 
       {/* Mobile Menu */}
-      <div className={`fixed top-0 right-0 h-full w-2/3 bg-white shadow-xl p-6 z-50 transform transition-transform duration-300 ${
+      <div className={`fixed top-0 right-0 h-full w-full sm:w-2/3 bg-white shadow-xl p-6 z-50 transform transition-transform duration-300 ${
         showMenu ? "translate-x-0" : "translate-x-full"
       }`}>
 
+        {/* Close Button */}
         <button 
           className='text-xl mb-6'
           onClick={() => setShowMenu(false)}
@@ -159,14 +154,14 @@ const Navbar = () => {
         </button>
 
         {/* Links */}
-        <ul className='flex flex-col gap-6 text-lg'>
+        <ul className='flex flex-col gap-6 text-lg font-medium'>
           {navLinks.map((link, index) => (
             <li key={index}>
               <NavLink 
                 to={link.path}
                 onClick={() => setShowMenu(false)}
                 className={({ isActive }) =>
-                  isActive ? "text-blue-500 font-semibold" : ""
+                  isActive ? "text-blue-500 font-semibold" : "text-gray-700"
                 }
               >
                 {link.name}
