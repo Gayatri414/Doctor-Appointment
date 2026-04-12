@@ -1,30 +1,28 @@
-import React from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { AppContext } from "../context/AppContext";
-
 import { useNavigate } from "react-router-dom";
 
-const RelatedDoctors=({speciality,docId})=>{
-const {doctors}=useContext(AppContext)
-const navigate=useNavigate()
-const[relDoc,setRelDocs]=useState([])
+const RelatedDoctors = ({ speciality, docId }) => {
+  const { doctors } = useContext(AppContext);
+  const navigate = useNavigate();
+  const [relDoc, setRelDocs] = useState([]);
 
+  useEffect(() => {
+    if (doctors.length > 0 && speciality) {
+      const doctorsData = doctors.filter(
+        (doc) => doc.speciality === speciality && doc._id !== docId
+      );
+      setRelDocs(doctorsData); // FIX
+    }
+  }, [doctors, speciality, docId]);
 
-useEffect(()=>{
-if(doctors.length>0 && speciality){
-    const doctorsData=doctors.filter((doc)=>doc.speciality===speciality && doc._id!==doc)
-    setRelDocs(doctorsData)
-}
-},[doctors,speciality,docId])
+  return (
+    <div className="flex flex-col items-center gap-4 my-16 text-gray-800">
 
-    return(
-      <div className="flex flex-col items-center gap-4 my-16 text-gray-800">
-
-      {/* Heading */}
       <h1 className="text-3xl font-bold">
         Top Doctors to Book
       </h1>
 
-      {/* Description */}
       <p className="text-gray-500 text-center max-w-xl">
         Simply browse through our extensive list of trusted doctors
       </p>
@@ -32,40 +30,30 @@ if(doctors.length>0 && speciality){
       {/* Doctors Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full px-6">
 
-        {relDoc.slice(0, 5).map((item, index) => (
-          <div onClick={()=>
-navigate(`/appointment/${item._id}`)
-          }
-            key={index}
+        {relDoc.slice(0, 5).map((item) => (
+          <div
+            key={item._id}
+            onClick={() => {
+              navigate(`/appointment/${item._id}`);
+              window.scrollTo(0, 0);
+            }}
             className="border rounded-xl overflow-hidden cursor-pointer hover:-translate-y-2 transition-all duration-300 shadow-sm hover:shadow-lg"
           >
-
-            {/* Doctor Image */}
             <img
               className="w-full h-40 object-cover"
               src={item.image}
               alt={item.name}
             />
 
-            {/* Content */}
             <div className="p-3">
-
-              {/* Availability */}
               <div className="flex items-center gap-2 text-sm text-green-500">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <p>Available</p>
               </div>
 
-              {/* Name */}
-              <p className="font-semibold text-lg">
-                {item.name}
-              </p>
+              <p className="font-semibold text-lg">{item.name}</p>
 
-              {/* Speciality */}
-              <p className="text-gray-500 text-sm">
-                {item.speciality}
-              </p>
-
+              <p className="text-gray-500 text-sm">{item.speciality}</p>
             </div>
           </div>
         ))}
@@ -73,17 +61,17 @@ navigate(`/appointment/${item._id}`)
       </div>
 
       {/* Button */}
-     <button
-  onClick={() => {
-    navigate('/doctors');
-    window.scrollTo(0, 0);
-  }}
-  className="bg-blue-500 text-white px-6 py-2 rounded-full mt-6 hover:bg-blue-600 transition-all duration-300"
->
-  More
-</button>
-
+      <button
+        onClick={() => {
+          navigate("/doctors");
+          window.scrollTo(0, 0);
+        }}
+        className="bg-blue-500 text-white px-6 py-2 rounded-full mt-6 hover:bg-blue-600 transition-all duration-300"
+      >
+        More
+      </button>
     </div>
-    )
-}
+  );
+};
+
 export default RelatedDoctors;
