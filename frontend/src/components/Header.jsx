@@ -6,7 +6,7 @@ const Header = () => {
 
   const location = useLocation();
 
-  // ❌ Hide Header on doctors page
+  //  Hide Header on doctors page
   if (location.pathname.startsWith('/doctors')) {
     return null;
   }

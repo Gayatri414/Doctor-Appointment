@@ -6,7 +6,7 @@ const SpecialityMenu = () => {
 
     const location = useLocation();
 
-    // ❌ Hide on doctors page
+    //  Hide on doctors page
     if (location.pathname.startsWith('/doctors')) {
         return null;
     }
