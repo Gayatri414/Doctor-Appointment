@@ -7,12 +7,21 @@ import jwt from 'jsonwebtoken'
 //API for adding doctor
 const addDoctor=async(req,res)=>{
 try{
-const{name,email,password,speciality,degree,experience,about,fees,address}=req.body()
+const { name, email, password, speciality, degree, experience, about, fees, address } = req.body;
 const imageFile=req.file
 
 //checking for all data to add doctor
 if(!name||!email||!password||!speciality||!degree||!experience||!about||!fees||!address){
     return res.json({success:false,message:"Missing Details"})
+}
+
+let parsedAddress = address
+if (typeof address === "string") {
+  try {
+    parsedAddress = JSON.parse(address.trim())
+  } catch (e) {
+    return res.json({ success: false, message: "Invalid address format" })
+  }
 }
 //validating email format
 if(!validator.isEmail(email)){
@@ -41,7 +50,7 @@ const doctorData={
     experience,
     about,
     fees,
-    address:JSON.parse(address),
+    address: parsedAddress,
     date:Date.now()
 
 }
@@ -92,16 +101,16 @@ const loginAdmin = async (req, res) => {
     }
 };
 //api to get all doctor list for admin panel
-const allDoctors=async(req,res)=>{
-    try{
-const doctors=await doctorModel.find({}).select(-'password')
-res.json({success:true,doctors})
-    }
-    catch(error){
-        console.log(error)
-        res.json({success:false,message:'error.message'})
-    }
-}
+const allDoctors = async (req, res) => {
+  try {
+    console.log("ALL DOCTORS HIT ✅");
+    const doctors = await doctorModel.find({}).select("-password");
+    res.json({ success: true, doctors });
+  } catch (error) {
+    console.log("ERROR IN allDoctors:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 
-export  {addDoctor,loginAdmin,allDoctors};
+export { addDoctor, loginAdmin, allDoctors };

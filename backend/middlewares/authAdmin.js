@@ -2,14 +2,17 @@ import jwt from "jsonwebtoken";
 
 const authAdmin = async (req, res, next) => {
     try {
-        const token = req.headers.authorization;
+        const authHeader = req.headers.authorization;
 
-        if (!token) {
+        if (!authHeader) {
             return res.json({
                 success: false,
                 message: "Not Authorized, login again"
             });
         }
+
+        //  REMOVE "Bearer "
+        const token = authHeader.split(" ")[1];
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -27,9 +30,10 @@ const authAdmin = async (req, res, next) => {
         console.log(error);
         return res.json({
             success: false,
-            message: error.message
+            message: "Invalid Token"
         });
     }
 };
+console.log("AUTH MIDDLEWARE HIT ✅");
 
 export default authAdmin;
