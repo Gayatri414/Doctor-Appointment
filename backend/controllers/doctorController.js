@@ -1,4 +1,5 @@
 import doctorModel from "../models/doctorModel.js";
+import mongoose from "mongoose";
 
 const changeAvailability = async (req, res) => {
   try {
@@ -20,7 +21,7 @@ const changeAvailability = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Availability Updated", // ✅ FIXED
+      message: "Availability Updated", 
     });
 
   } catch (error) {
@@ -32,5 +33,23 @@ const changeAvailability = async (req, res) => {
   }
  
 };
+const doctorList = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: "Database not connected",
+      });
+    }
+    const doctors = await doctorModel
+      .find({})
+      .select("-password"); // exclude password only
 
-export { changeAvailability };
+    res.json({ success: true, doctors });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export { changeAvailability ,doctorList};
