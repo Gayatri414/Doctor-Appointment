@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
+import { AppContext } from '../context/AppContext';
 
 const Navbar = () => {
 
   const [showMenu, setShowMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
 
+  const { token, setToken } = useContext(AppContext);
   const navigate = useNavigate();
+
+  const dropdownRef = useRef();
+
+  //  Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -58,7 +75,7 @@ const Navbar = () => {
       </ul>
 
       {/* Right Side */}
-      <div className='flex items-center gap-4 relative'>
+      <div className='flex items-center gap-4 relative' ref={dropdownRef}>
 
         {/* NOT Logged In */}
         {!token ? (
@@ -89,6 +106,7 @@ const Navbar = () => {
             {/* Dropdown */}
             {showDropdown && (
               <div className='absolute top-12 right-0 bg-white shadow-lg rounded-md py-3 w-40 z-50'>
+                
                 <p 
                   onClick={() => {
                     navigate('/my-profile');
@@ -122,7 +140,7 @@ const Navbar = () => {
           </div>
         )}
 
-        {/* Hamburger (Mobile Only) */}
+        {/* Hamburger */}
         <button 
           className='lg:hidden text-2xl'
           onClick={() => setShowMenu(true)}
@@ -145,7 +163,6 @@ const Navbar = () => {
         showMenu ? "translate-x-0" : "translate-x-full"
       }`}>
 
-        {/* Close Button */}
         <button 
           className='text-xl mb-6'
           onClick={() => setShowMenu(false)}
@@ -153,7 +170,6 @@ const Navbar = () => {
           ✖
         </button>
 
-        {/* Links */}
         <ul className='flex flex-col gap-6 text-lg font-medium'>
           {navLinks.map((link, index) => (
             <li key={index}>

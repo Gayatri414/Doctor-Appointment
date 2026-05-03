@@ -2,9 +2,12 @@ import React, { useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";   
 
 const Login = () => {
-  const { backendUrl, token, setToken } = useContext(AppContext);
+
+  const { backendUrl, setToken } = useContext(AppContext);
+  const navigate = useNavigate();   
 
   const [state, setState] = useState("Sign Up");
   const [email, setEmail] = useState("");
@@ -13,7 +16,7 @@ const Login = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-
+console.log({ name, email, password });
     try {
       if (state === "Sign Up") {
         const { data } = await axios.post(
@@ -24,9 +27,11 @@ const Login = () => {
         if (data.success) {
           localStorage.setItem("token", data.token);
           setToken(data.token);
+          navigate("/");   //redirect after signup
         } else {
           toast.error(data.message);
         }
+
       } else {
         const { data } = await axios.post(
           backendUrl + "/api/user/login",
@@ -36,10 +41,12 @@ const Login = () => {
         if (data.success) {
           localStorage.setItem("token", data.token);
           setToken(data.token);
+          navigate("/");   //redirect after login
         } else {
           toast.error(data.message);
         }
       }
+
     } catch (error) {
       toast.error(error.message);
     }
@@ -52,14 +59,16 @@ const Login = () => {
     >
       <div className="flex flex-col gap-4 w-full max-w-md p-8 border rounded-xl shadow-md">
 
+        {/* Title */}
         <p className="text-2xl font-semibold text-center">
           {state === "Sign Up" ? "Create Account" : "Login"}
         </p>
 
         <p className="text-gray-500 text-sm text-center">
-          Please {state === "Sign Up" ? "sign up" : "login"} to book appointment
+          Please {state === "Sign Up" ? "sign up" : "login"} to continue
         </p>
 
+        {/* Name */}
         {state === "Sign Up" && (
           <div>
             <p className="text-sm">Full Name</p>
@@ -73,6 +82,7 @@ const Login = () => {
           </div>
         )}
 
+        {/* Email */}
         <div>
           <p className="text-sm">Email</p>
           <input
@@ -84,6 +94,7 @@ const Login = () => {
           />
         </div>
 
+        {/* Password */}
         <div>
           <p className="text-sm">Password</p>
           <input
@@ -95,10 +106,12 @@ const Login = () => {
           />
         </div>
 
+        {/* Button */}
         <button className="bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
           {state === "Sign Up" ? "Create Account" : "Login"}
         </button>
 
+        {/* Toggle */}
         <p className="text-sm text-center">
           {state === "Sign Up"
             ? "Already have an account?"
@@ -113,6 +126,7 @@ const Login = () => {
             {state === "Sign Up" ? "Login" : "Sign Up"}
           </span>
         </p>
+
       </div>
     </form>
   );
