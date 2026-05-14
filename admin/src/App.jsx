@@ -6,7 +6,6 @@ import { AdminContext } from "./context/AdminContext";
 import { DoctorContext } from "./context/DoctorContext";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import ClearTokens from "./components/ClearTokens";
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Admin/Dashboard";
 import AllAppointments from './pages/Admin/AllAppointments';
@@ -23,7 +22,6 @@ const App = () => {
 
   return (
     <>
-      <ClearTokens />
       {aToken || dToken ? (
         <div className="bg-[#F8F9FD] min-h-screen">
           <Navbar />
