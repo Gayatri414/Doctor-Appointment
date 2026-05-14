@@ -164,7 +164,7 @@ const updateProfile = async (req, res) => {
         const imageFile=req.file;
 
 if(!name||!phone||!dob||!gender){
-    return res.json({success:false,message:error.message})
+    return res.json({success:false,message:"Missing Details"})
 }
 await userModel.findByIdAndUpdate(userId,{name,phone,address:JSON.parse(address),dob,gender})
 if(imageFile){
@@ -174,7 +174,7 @@ const imageURL=imageUpload.secure_url;
 await userModel.findByIdAndUpdate(userId,{image:imageURL})
 
 }
-res.json({success:true,message:error.message})
+res.json({success:true,message:"Profile Updated"})
     }
     catch(error){
         console.log(error);

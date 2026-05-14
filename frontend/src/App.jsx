@@ -7,15 +7,22 @@ import Contact from './pages/Contact';
 import MyProfile from './pages/MyProfile';
 import MyAppointment from './pages/MyAppointment';
 import Appointment from './pages/Appointment';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFailed from './pages/PaymentFailed';
+import PaymentInvoice from './pages/PaymentInvoice';
+import PaymentHistory from './pages/PaymentHistory';
 import Navbar from './components/Navbar';
 import About from './pages/About';
 import Footer from './components/footer';
+import ClearTokens from './components/ClearTokens';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 const App=()=>{
   return (
     <div className='mx-4 sm:mx-[10%]'>
       <ToastContainer/>
+      <ClearTokens />
       <Navbar/>
 
 <Routes>
@@ -28,6 +35,10 @@ const App=()=>{
         <Route path='/my-profile' element={<MyProfile/>}/>
          <Route path='/my-appointments' element={<MyAppointment/>}/>
          <Route path='/appointment/:docId' element={<Appointment/>}/>
+         <Route path='/payment-success' element={<PaymentSuccess/>}/>
+         <Route path='/payment-failed' element={<PaymentFailed/>}/>
+         <Route path='/payment-invoice' element={<PaymentInvoice/>}/>
+         <Route path='/payment-history' element={<PaymentHistory/>}/>
 
 </Routes>
 <Footer/>

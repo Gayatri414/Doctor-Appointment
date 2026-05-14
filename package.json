@@ -1,0 +1,29 @@
+{
+  "name": "doctor-appointment-system",
+  "version": "1.0.0",
+  "description": "A comprehensive full-stack doctor appointment management system",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run admin\"",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "admin": "cd admin && npm run dev",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ../admin && npm install",
+    "build": "cd frontend && npm run build && cd ../admin && npm run build",
+    "start": "cd backend && npm start"
+  },
+  "keywords": [
+    "doctor",
+    "appointment",
+    "healthcare",
+    "react",
+    "nodejs",
+    "mongodb",
+    "razorpay"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

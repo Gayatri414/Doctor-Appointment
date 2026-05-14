@@ -25,6 +25,30 @@ const AppContextProvider = (props) => {
     }
   }, [token]);
 
+  // Add axios interceptor to handle token expiration
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401 || error.response?.data?.message?.includes('expired') || error.response?.data?.message?.includes('invalid')) {
+          // Token is expired or invalid
+          console.log("Token expired, logging out...");
+          localStorage.removeItem('token');
+          setToken(null);
+          setUserData(null);
+          toast.error("Session expired. Please login again.");
+          // Redirect to login page
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   //  GET DOCTORS
   const getDoctorsData = async () => {
     try {
@@ -50,14 +74,17 @@ const AppContextProvider = (props) => {
       );
 
       if (data.success) {
-        setUserData(data.userData);
+        setUserData(data.user);
       } else {
         toast.error(data.message);
       }
 
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || error.message);
+      // Don't show error toast for token expiration as interceptor handles it
+      if (!error.response?.data?.message?.includes('expired')) {
+        toast.error(error?.response?.data?.message || error.message);
+      }
     }
   };
 

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Tokens</title>
+</head>
+<body>
+    <h1>Clear All Tokens</h1>
+    <button onclick="clearAllTokens()">Clear All Tokens</button>
+    <div id="result"></div>
+
+    <script>
+        function clearAllTokens() {
+            // Clear all possible tokens
+            localStorage.removeItem('token');      // User token
+            localStorage.removeItem('aToken');     // Admin token  
+            localStorage.removeItem('dToken');     // Doctor token
+            
+            // Clear all localStorage items (optional)
+            localStorage.clear();
+            
+            document.getElementById('result').innerHTML = 
+                '<p style="color: green;">All tokens cleared successfully!</p>' +
+                '<p>Please refresh your application and login again.</p>';
+        }
+    </script>
+</body>
+</html>

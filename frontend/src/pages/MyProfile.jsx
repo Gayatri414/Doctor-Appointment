@@ -9,7 +9,7 @@ const MyProfile = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [image, setImage] = useState(false);
 
-  const { userData, setUserData, backendUrl, token } = useContext(AppContext);
+  const { userData, setUserData, backendUrl, token, loadUserProfileData } = useContext(AppContext);
 
   //  UPDATE PROFILE API
   const updateProfile = async () => {
@@ -18,7 +18,7 @@ const MyProfile = () => {
 
       formData.append("name", userData.name);
       formData.append("phone", userData.phone);
-      formData.append("address", userData.address);
+      formData.append("address", JSON.stringify({line1: userData.address, line2: ""}));
       formData.append("gender", userData.gender);
       formData.append("dob", userData.dob);
 
@@ -39,6 +39,8 @@ const MyProfile = () => {
       if (data.success) {
         toast.success("Profile Updated");
         setIsEdit(false);
+        // Reload user data
+        await loadUserProfileData();
       } else {
         toast.error(data.message);
       }
