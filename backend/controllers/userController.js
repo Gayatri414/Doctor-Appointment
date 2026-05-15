@@ -52,66 +52,15 @@ const registerUser = async (req, res) => {
         const token = jwt.sign(
             { id: user._id },
             process.env.JWT_SECRET,
-            { expiresIn: "1d" }
+            { expiresIn: "7d" }
         )
+
+        console.log("✅ Registration token generated");
+        console.log("Token preview:", `${token.substring(0, 20)}...`);
+        console.log("JWT_SECRET used:", process.env.JWT_SECRET);
+        console.log("User ID in token:", user._id);
 
         res.status(201).json({
-            success: true,
-            token
-        })
-
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({
-            success: false,
-            message: error.message
-        })
-    }
-}
-
-// LOGIN USER (your existing one)
-const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body
-
-        if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Missing Details"
-            })
-        }
-
-        if (!validator.isEmail(email)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid Email"
-            })
-        }
-
-        const user = await userModel.findOne({ email })
-        if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: "User does not exist"
-            })
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password)
-
-        if (!isMatch) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid Credentials"
-            })
-        }
-
-        const token = jwt.sign(
-            { id: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d" }
-        )
-
-        res.status(200).json({
             success: true,
             token,
             user: {
@@ -129,20 +78,111 @@ const loginUser = async (req, res) => {
         })
     }
 }
+
+// LOGIN USER
+const loginUser = async (req, res) => {
+    try {
+        console.log("=== LOGIN REQUEST ===");
+        console.log("Request body:", req.body);
+        
+        const { email, password } = req.body
+
+        // Validate required fields
+        if (!email || !password) {
+            console.log("Missing email or password");
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            })
+        }
+
+        // Validate email format
+        if (!validator.isEmail(email)) {
+            console.log("Invalid email format:", email);
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid email address"
+            })
+        }
+
+        // Find user
+        const user = await userModel.findOne({ email })
+        if (!user) {
+            console.log("User not found:", email);
+            return res.status(400).json({
+                success: false,
+                message: "No account found with this email address"
+            })
+        }
+
+        // Check password
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) {
+            console.log("Invalid password for user:", email);
+            return res.status(400).json({
+                success: false,
+                message: "Incorrect password"
+            })
+        }
+
+        // Generate token
+        const token = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        )
+
+        console.log("✅ Token generated successfully");
+        console.log("Token preview:", `${token.substring(0, 20)}...`);
+        console.log("JWT_SECRET used:", process.env.JWT_SECRET);
+        console.log("User ID in token:", user._id);
+        console.log("Login successful for user:", email);
+        
+        res.status(200).json({
+            success: true,
+            token,
+            user: {
+                name: user.name,
+                email: user.email,
+                image: user.image
+            }
+        })
+
+    } catch (error) {
+        console.log("Login error:", error)
+        res.status(500).json({
+            success: false,
+            message: "Server error during login"
+        })
+    }
+}
 //API to get user profile data
 const getProfile = async (req, res) => {
     try {
-        console.log("PROFILE API HIT");
-        const { userId } = req.body;
+        console.log("=== PROFILE API HIT ===");
+        console.log("REQUEST USER ID:", req.userId);
+        
+        if (!req.userId) {
+            console.log("❌ No userId found in request");
+            return res.status(400).json({
+                success: false,
+                message: "User ID not found in request"
+            });
+        }
 
-        const userData = await userModel.findById(userId).select('-password');
+        console.log("🔍 Searching for user with ID:", req.userId);
+        const userData = await userModel.findById(req.userId).select('-password');
 
         if (!userData) {
+            console.log("❌ User not found in database");
             return res.status(404).json({
                 success: false,
                 message: "User not found"
             });
         }
+
+        console.log("✅ User found successfully");
+        console.log("User data:", { name: userData.name, email: userData.email });
 
         res.status(200).json({
             success: true,
@@ -150,7 +190,7 @@ const getProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        console.log("❌ Profile API error:", error);
         res.status(500).json({
             success: false,
             message: error.message

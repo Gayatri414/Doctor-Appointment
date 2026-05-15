@@ -31,6 +31,10 @@ const authAdmin = async (req, res, next) => {
             });
         }
 
+        // Add admin info to request object
+        req.adminEmail = decoded.email;
+        req.adminId = decoded.id;
+
         next();
 
     } catch (error) {

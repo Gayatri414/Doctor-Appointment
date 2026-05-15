@@ -3,6 +3,7 @@ import validator from "validator"
 import bcrypt from "bcrypt"
 import {v2 as cloudinary} from 'cloudinary'
 import doctorModel from "../models/doctorModel.js"
+import adminModel from "../models/adminModel.js"
 import jwt from 'jsonwebtoken'
 //API for adding doctor
 const addDoctor=async(req,res)=>{
@@ -75,15 +76,40 @@ const loginAdmin = async (req, res) => {
             email === process.env.ADMIN_EMAIL &&
             password === process.env.ADMIN_PASSWORD
         ) {
+            // Create or update admin profile in database
+            let admin = await adminModel.findOne({ email: process.env.ADMIN_EMAIL });
+            
+            if (!admin) {
+                // Create default admin profile if it doesn't exist
+                admin = new adminModel({
+                    name: "Administrator",
+                    email: process.env.ADMIN_EMAIL,
+                    phone: "",
+                    address: "",
+                    image: ""
+                });
+                await admin.save();
+                console.log("✅ Default admin profile created");
+            }
+
             const token = jwt.sign(
-                { email },
+                { 
+                    email,
+                    id: admin._id,
+                    role: "admin"
+                },
                 process.env.JWT_SECRET,
                 { expiresIn: "1d" }
             );
 
             return res.json({
                 success: true,
-                token
+                token,
+                admin: {
+                    name: admin.name,
+                    email: admin.email,
+                    role: "admin"
+                }
             });
         } else {
             return res.json({
@@ -93,7 +119,7 @@ const loginAdmin = async (req, res) => {
         }
 
     } catch (error) {
-        console.log(error);
+        console.log("Admin login error:", error);
         return res.json({
             success: false,
             message: error.message
@@ -112,5 +138,84 @@ const allDoctors = async (req, res) => {
   }
 };
 
+// API to get admin profile
+const getAdminProfile = async (req, res) => {
+  try {
+    console.log("ADMIN PROFILE ROUTE HIT ✅");
+    console.log("Admin email from token:", req.adminEmail);
+    
+    // Find admin by email from the JWT token
+    const admin = await adminModel.findOne({ email: req.adminEmail }).select("-__v");
+    
+    if (!admin) {
+      // Create default admin profile if it doesn't exist
+      const newAdmin = new adminModel({
+        name: "Administrator",
+        email: req.adminEmail,
+        phone: "",
+        address: "",
+        image: ""
+      });
+      await newAdmin.save();
+      
+      console.log("✅ Created default admin profile");
+      return res.status(200).json({
+        success: true,
+        admin: newAdmin
+      });
+    }
 
-export { addDoctor, loginAdmin, allDoctors };
+    console.log("✅ Admin profile found:", admin.name);
+    res.status(200).json({
+      success: true,
+      admin
+    });
+
+  } catch (error) {
+    console.log("ADMIN PROFILE ERROR:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// API to update admin profile
+const updateAdminProfile = async (req, res) => {
+  try {
+    console.log("UPDATE ADMIN PROFILE HIT ✅");
+    console.log("Admin email from token:", req.adminEmail);
+    console.log("Update data:", req.body);
+    
+    const { name, email, phone, address } = req.body;
+    
+    // Find and update admin profile
+    const admin = await adminModel.findOneAndUpdate(
+      { email: req.adminEmail },
+      {
+        name: name || "Administrator",
+        phone: phone || "",
+        address: address || ""
+        // Note: We don't update email as it's tied to environment variable
+      },
+      { new: true, upsert: true }
+    ).select("-__v");
+
+    console.log("✅ Admin profile updated:", admin.name);
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      admin
+    });
+
+  } catch (error) {
+    console.log("UPDATE ADMIN PROFILE ERROR:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+export { addDoctor, loginAdmin, allDoctors, getAdminProfile, updateAdminProfile };

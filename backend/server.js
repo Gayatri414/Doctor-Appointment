@@ -13,6 +13,12 @@ import { doctorList } from './controllers/doctorController.js';
 // Always load env from backend/.env (independent of cwd)
 dotenv.config({ path: new URL('./.env', import.meta.url) });
 
+// Debug JWT_SECRET on startup
+console.log("=== STARTUP DEBUG ===");
+console.log("JWT SECRET:", process.env.JWT_SECRET);
+console.log("JWT SECRET LENGTH:", process.env.JWT_SECRET?.length);
+console.log("MONGODB_URI exists:", !!process.env.MONGODB_URI);
+
 //app config
 const app = express();
 const port = process.env.PORT || 4000;

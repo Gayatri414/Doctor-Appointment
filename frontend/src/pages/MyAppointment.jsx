@@ -31,7 +31,7 @@ const MyAppointment = () => {
         setAppointments(data.appointments.reverse());
       }
     } catch (error) {
-      console.log(error);
+      console.error("Get appointments error:", error);
       toast.error(error.response?.data?.message || error.message);
     }
   };
@@ -51,7 +51,7 @@ const MyAppointment = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Cancel appointment error:", error);
       toast.error(error.response?.data?.message || error.message);
     }
   };
@@ -142,8 +142,9 @@ const MyAppointment = () => {
               <div className="w-full md:w-40">
                 <img
                   className="w-full h-40 object-cover rounded-lg"
-                  src={item.docData.image}
-                  alt={item.docData.name}
+                  src={item?.docData?.image || "https://via.placeholder.com/150x150?text=Doctor"}
+                  alt={item?.docData?.name || "Doctor"}
+                  onError={(e) => { e.target.src = "https://via.placeholder.com/150x150?text=Doctor" }}
                 />
               </div>
 
@@ -151,16 +152,16 @@ const MyAppointment = () => {
               <div className="flex-1 text-sm text-gray-700">
 
                 <p className="text-lg font-semibold text-gray-900">
-                  {item.docData.name}
+                  {item?.docData?.name || "Doctor Name"}
                 </p>
 
                 <p className="text-gray-500">
-                  {item.docData.speciality}
+                  {item?.docData?.speciality || "Speciality"}
                 </p>
 
                 <p className="mt-2 font-medium">Address:</p>
-                <p>{item.docData.address?.line1}</p>
-                <p>{item.docData.address?.line2}</p>
+                <p>{item?.docData?.address?.line1 || "Address not available"}</p>
+                {item?.docData?.address?.line2 && <p>{item.docData.address.line2}</p>}
 
                 <p className="mt-2">
                   <span className="font-medium">Date & Time:</span>{" "}

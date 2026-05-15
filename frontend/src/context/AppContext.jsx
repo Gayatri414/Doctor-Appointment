@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -12,42 +12,16 @@ const AppContextProvider = (props) => {
   const [doctors, setDoctors] = useState([]);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [userData, setUserData] = useState(null);
-
-  console.log("Backend URL:", backendUrl);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   //  SET TOKEN GLOBALLY IN AXIOS
   useEffect(() => {
     if (token) {
-      console.log("TOKEN SET IN AXIOS:", token);
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     } else {
       delete axios.defaults.headers.common["Authorization"];
     }
   }, [token]);
-
-  // Add axios interceptor to handle token expiration
-  useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401 || error.response?.data?.message?.includes('expired') || error.response?.data?.message?.includes('invalid')) {
-          // Token is expired or invalid
-          console.log("Token expired, logging out...");
-          localStorage.removeItem('token');
-          setToken(null);
-          setUserData(null);
-          toast.error("Session expired. Please login again.");
-          // Redirect to login page
-          window.location.href = '/login';
-        }
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.response.eject(interceptor);
-    };
-  }, []);
 
   //  GET DOCTORS
   const getDoctorsData = async () => {
@@ -61,43 +35,88 @@ const AppContextProvider = (props) => {
       }
 
     } catch (error) {
-      console.log(error);
+      console.error("Get doctors error:", error);
       toast.error(error?.response?.data?.message || error.message);
     }
   };
 
-  //  LOAD USER PROFILE (NO HEADER OVERRIDE)
-  const loadUserProfileData = async () => {
+  //  LOAD USER PROFILE
+  const loadUserProfileData = useCallback(async () => {
+    if (!token || isLoadingProfile) {
+      return;
+    }
+    
+    setIsLoadingProfile(true);
+    
     try {
-      const { data } = await axios.get(
-        backendUrl + '/api/user/profile'
-      );
+      // Always use explicit headers instead of relying on global defaults
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+      
+      const response = await axios.get(backendUrl + '/api/user/profile', config);
 
-      if (data.success) {
-        setUserData(data.user);
+      if (response.data.success) {
+        setUserData(response.data.user);
       } else {
-        toast.error(data.message);
+        toast.error(response.data.message);
       }
 
     } catch (error) {
-      console.log(error);
-      // Don't show error toast for token expiration as interceptor handles it
-      if (!error.response?.data?.message?.includes('expired')) {
-        toast.error(error?.response?.data?.message || error.message);
+      // Only clear auth state if it's a real authentication error
+      // Don't clear on network errors or other issues
+      if (error.response?.status === 401) {
+        const errorMessage = error.response?.data?.message || "";
+        
+        // Only clear auth if it's actually a token issue
+        if (errorMessage.includes("expired") || errorMessage.includes("invalid") || errorMessage.includes("Not Authorized")) {
+          localStorage.removeItem('token');
+          setToken(null);
+          setUserData(null);
+          toast.error("Session expired. Please login again.");
+        } else {
+          toast.error("Failed to load profile");
+        }
+      } else {
+        toast.error("Failed to load profile");
       }
+    } finally {
+      setIsLoadingProfile(false);
     }
-  };
+  }, [token, backendUrl, isLoadingProfile]);
+
+  // Custom setToken function that handles both state and localStorage
+  const setTokenAndStorage = useCallback((newToken) => {
+    if (newToken) {
+      // Set localStorage first
+      localStorage.setItem('token', newToken);
+      
+      // Then set state
+      setToken(newToken);
+      
+      // Set axios header immediately
+      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+    } else {
+      localStorage.removeItem('token');
+      setToken(null);
+      setUserData(null);
+      delete axios.defaults.headers.common["Authorization"];
+    }
+  }, []);
 
   //CONTEXT VALUE
   const value = {
     doctors,
     currencySymbol,
     token,
-    setToken,
+    setToken: setTokenAndStorage, // Use custom function
     backendUrl,
     userData,
     setUserData,
-    loadUserProfileData
+    loadUserProfileData,
+    isLoadingProfile
   };
 
   //  LOAD DOCTORS ON START
@@ -107,13 +126,30 @@ const AppContextProvider = (props) => {
 
   // LOAD USER WHEN TOKEN CHANGES
   useEffect(() => {
-    if (token && token !== "null") {
-      console.log("CALLING PROFILE API...");
-      loadUserProfileData();
+    if (token && token !== "null" && token !== null) {
+      // Add a small delay to ensure axios headers are set
+      setTimeout(() => {
+        loadUserProfileData();
+      }, 100);
     } else {
       setUserData(null);
+      setIsLoadingProfile(false);
     }
-  }, [token]);
+  }, [token]); // Only depend on token
+
+  // Initialize token from localStorage on app start
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    
+    if (storedToken && storedToken !== token) {
+      setToken(storedToken);
+      // Set axios header immediately for stored token
+      axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+    } else if (!storedToken) {
+      setToken(null);
+      setUserData(null);
+    }
+  }, []); // Run only once on mount
 
   return (
     <AppContext.Provider value={value}>

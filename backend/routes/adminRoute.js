@@ -1,5 +1,5 @@
 import express from "express";
-import { addDoctor, loginAdmin, allDoctors } from "../controllers/adminController.js";
+import { addDoctor, loginAdmin, allDoctors, getAdminProfile, updateAdminProfile } from "../controllers/adminController.js";
 import { changeAvailability } from "../controllers/doctorController.js";
 import { 
   appointmentsAdmin, 
@@ -13,6 +13,10 @@ const adminRouter = express.Router();
 
 // Admin login
 adminRouter.post("/login", loginAdmin);
+
+// Admin profile routes
+adminRouter.get("/profile", authAdmin, getAdminProfile);
+adminRouter.put("/profile", authAdmin, updateAdminProfile);
 
 // Add doctor
 adminRouter.post("/add-doctor", authAdmin, upload.single("image"), addDoctor);
