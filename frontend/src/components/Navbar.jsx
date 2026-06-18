@@ -125,15 +125,22 @@ const Navbar = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <span className="relative z-10">Create Account</span>
             </motion.button>
-          ) : isLoadingProfile ? (
-            <motion.div 
+          ) : isLoadingProfile && !userData ? (
+            /* ── Skeleton — only shown when token exists but NO cache yet ── */
+            <motion.div
               className='hidden md:flex items-center gap-3 bg-gray-800/50 rounded-full px-4 py-2 backdrop-blur-sm border border-gray-700/50'
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-gray-400 text-sm">Loading...</span>
+              {/* Avatar skeleton */}
+              <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden relative">
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
+              </div>
+              {/* Name skeleton */}
+              <div className="h-3 w-20 rounded-full bg-gray-700 overflow-hidden relative">
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
+              </div>
             </motion.div>
           ) : (
             <motion.div 
@@ -336,15 +343,25 @@ const Navbar = () => {
               >
                 Create Account
               </motion.button>
-            ) : isLoadingProfile ? (
-              <motion.div  
-                className='mt-8 bg-gray-800/50 px-6 py-3 rounded-full w-full flex items-center justify-center gap-3'
+            ) : isLoadingProfile && !userData ? (
+              /* ── Mobile skeleton ── */
+              <motion.div
+                className='mt-8 bg-gray-800/50 px-6 py-4 rounded-2xl w-full flex items-center gap-4'
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
               >
-                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-gray-400">Loading profile...</span>
+                <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0 overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-28 rounded-full bg-gray-700 overflow-hidden relative">
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
+                  </div>
+                  <div className="h-2.5 w-36 rounded-full bg-gray-700/70 overflow-hidden relative">
+                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
+                  </div>
+                </div>
               </motion.div>
             ) : (
               <div className="space-y-4 mt-8">
