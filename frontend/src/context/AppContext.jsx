@@ -1,143 +1,178 @@
 import { createContext, useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { isTokenExpired } from "../utils/tokenUtils";
 
 export const AppContext = createContext();
 
-/* ─── helpers ─── */
-const CACHE_KEY   = "userData";
-const TOKEN_KEY   = "token";
+/* ─── storage helpers ─── */
+const TOKEN_KEY = "token";
+const CACHE_KEY = "userData";
 
-const readCache = () => {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+const readTokenFromStorage = () => {
+  const t = localStorage.getItem(TOKEN_KEY);
+  // Treat "null" / "undefined" strings as absent
+  return t && t !== "null" && t !== "undefined" ? t : null;
 };
 
-const writeCache = (data) => {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); }
-  catch { /* ignore quota errors */ }
+const writeCache  = (data) => {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch { /* quota */ }
 };
 
-const clearCache = () => {
-  localStorage.removeItem(CACHE_KEY);
+const clearStorage = () => {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(CACHE_KEY);
 };
 
-/* ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════ */
 const AppContextProvider = (props) => {
 
-  const currencySymbol = '$';
+  const currencySymbol = "$";
   const backendUrl     = import.meta.env.VITE_BACKEND_URL;
 
-  // ── Read token once, synchronously, before first render ──
-  const initialToken = localStorage.getItem(TOKEN_KEY) || null;
+  /*
+   * Initialize state from storage synchronously:
+   * - If token is absent or expired, clear storage and initialize as null.
+   * - If token is valid, seed both token and userData from cache to avoid layout shift.
+   */
+  const [token, setTokenState] = useState(() => {
+    const stored = readTokenFromStorage();
+    if (stored) {
+      if (isTokenExpired(stored)) {
+        clearStorage();
+        return null;
+      }
+      return stored;
+    }
+    return null;
+  });
 
-  // ── Seed userData from cache so Navbar shows name INSTANTLY ──
-  const initialUserData = initialToken ? readCache() : null;
+  const [userData, setUserData] = useState(() => {
+    const stored = readTokenFromStorage();
+    if (stored && !isTokenExpired(stored)) {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        return cached ? JSON.parse(cached) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [doctors,          setDoctors]          = useState([]);
-  const [token,            setTokenState]        = useState(initialToken);
-  const [userData,         setUserData]          = useState(initialUserData);
-  // isLoadingProfile is TRUE from the start only when we have a token
-  // but no cached data (so Navbar shows skeleton, not flash of nothing)
-  const [isLoadingProfile, setIsLoadingProfile]  = useState(!!initialToken && !initialUserData);
 
-  // Guard ref — prevents duplicate concurrent API calls
+  // Prevents duplicate concurrent profile fetches
   const fetchingRef = useRef(false);
 
-  // ── Keep axios default header in sync ──
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* Keep axios default header in sync with token state                  */
+  /* ──────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      console.log("Token Found:", token.substring(0, 20) + "...");
+      console.log("[Auth] Token loaded:", token.substring(0, 22) + "...");
     } else {
       delete axios.defaults.headers.common["Authorization"];
     }
   }, [token]);
 
-  /* ── LOAD DOCTORS ── */
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* getDoctorsData                                                       */
+  /* ──────────────────────────────────────────────────────────────────── */
   const getDoctorsData = useCallback(async () => {
     try {
-      const { data } = await axios.get(backendUrl + '/api/doctor/list');
+      const { data } = await axios.get(backendUrl + "/api/doctor/list");
       if (data.success) setDoctors(data.doctors);
       else toast.error(data.message);
     } catch (error) {
-      console.error("Get doctors error:", error);
+      console.error("[Doctors] Fetch error:", error);
       toast.error(error?.response?.data?.message || error.message);
     }
   }, [backendUrl]);
 
-  /* ── LOAD USER PROFILE ──
-     - isSilent = true  → background refresh (don't show loading spinner)
-     - isSilent = false → first load, set isLoadingProfile
-  */
-  const loadUserProfileData = useCallback(async (isSilent = false) => {
-    if (!token) {
-      console.log("No token — skipping profile fetch");
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* loadUserProfileData                                                  */
+  /*  - Always validates token against backend.                           */
+  /*  - On success  → setUserData + writeCache                            */
+  /*  - On 401/404  → clearStorage + setToken(null) + setUserData(null)   */
+  /*    (shows Login button immediately)                                   */
+  /* ──────────────────────────────────────────────────────────────────── */
+  const loadUserProfileData = useCallback(async (currentToken) => {
+    // Accept an explicit token so we're not stale-closing over state
+    const tok = currentToken || token;
+    if (!tok) {
+      console.log("[Auth] No token — skipping profile fetch");
       return;
     }
     if (fetchingRef.current) {
-      console.log("Already fetching profile — skipping duplicate call");
+      console.log("[Auth] Already fetching — skipping duplicate");
       return;
     }
 
     fetchingRef.current = true;
-    if (!isSilent) setIsLoadingProfile(true);
+    setIsLoadingProfile(true);
 
-    console.log("Fetching Profile...");
+    console.log("[Auth] Fetching Profile...");
 
     try {
-      const response = await axios.get(backendUrl + '/api/user/profile', {
+      const response = await axios.get(backendUrl + "/api/user/profile", {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tok}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (response.data.success) {
-        console.log("Profile Loaded ✅");
+        console.log("[Auth] Profile Loaded ✅");
         const freshData = response.data.user;
         setUserData(freshData);
-        writeCache(freshData);           // update cache silently
-        console.log("User State Updated ✅");
+        writeCache(freshData);
+        console.log("[Auth] User State Updated ✅");
       } else {
-        console.log("Profile API returned success: false —", response.data.message);
-        if (!isSilent) toast.error(response.data.message || "Failed to load profile");
+        // API returned success:false — treat as auth failure
+        console.log("[Auth] Profile fetch: success=false —", response.data.message);
+        console.log("[Auth] Profile fetch failure — clearing auth");
+        clearStorage();
+        setTokenState(null);
+        setUserData(null);
+        toast.error(response.data.message || "Failed to load profile. Please login again.");
       }
 
     } catch (error) {
-      console.log("Profile loading error:", error);
       const status = error.response?.status;
       const msg    = error.response?.data?.message || "";
+      console.log("[Auth] Profile fetch failure — status:", status, "msg:", msg);
 
-      if (status === 401) {
-        if (
-          msg.includes("expired") ||
-          msg.includes("invalid") ||
-          msg.includes("Not Authorized") ||
-          msg.includes("authentication")
-        ) {
-          console.log("Token invalid — clearing auth");
-          clearCache();
-          setTokenState(null);
-          setUserData(null);
-          toast.error("Session expired. Please login again.");
-        } else {
-          if (!isSilent) toast.error("Authentication failed — please login again");
-        }
+      if (status === 401 || status === 403) {
+        // Token expired / invalid / not authorized
+        console.log("[Auth] Token invalid or expired — clearing auth");
+        clearStorage();
+        setTokenState(null);
+        setUserData(null);
+        toast.error("Session expired. Please login again.");
+
       } else if (status === 404) {
-        console.log("User not found — clearing auth");
-        clearCache();
+        // Account deleted or not found
+        console.log("[Auth] User not found — clearing auth");
+        clearStorage();
         setTokenState(null);
         setUserData(null);
         toast.error("Account not found. Please register again.");
+
       } else if (!error.response) {
-        console.log("Network error — keeping auth");
-        if (!isSilent) toast.error("Network error — please check your connection");
+        // Network error — keep token, but don't show avatar (userData stays null)
+        console.log("[Auth] Network error — keeping token, userData remains null");
+        toast.error("Network error — please check your connection.");
+
       } else {
-        if (!isSilent) toast.error("Failed to load profile");
+        // Unknown server error — clear to be safe
+        console.log("[Auth] Unknown error — clearing auth");
+        clearStorage();
+        setTokenState(null);
+        setUserData(null);
+        toast.error("Authentication error. Please login again.");
       }
     } finally {
       fetchingRef.current = false;
@@ -145,42 +180,49 @@ const AppContextProvider = (props) => {
     }
   }, [token, backendUrl]);
 
-  /* ── Custom setToken — single source of truth ── */
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* setToken — public API exposed to Login / Logout                      */
+  /* ──────────────────────────────────────────────────────────────────── */
   const setToken = useCallback((newToken) => {
-    if (newToken) {
+    if (newToken && newToken !== "null" && newToken !== "undefined") {
       localStorage.setItem(TOKEN_KEY, newToken);
       axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
       setTokenState(newToken);
+      // Profile will be fetched by the token useEffect below
     } else {
-      clearCache();
+      console.log("[Auth] Logout triggered — clearing auth");
+      clearStorage();
       delete axios.defaults.headers.common["Authorization"];
       setTokenState(null);
       setUserData(null);
     }
   }, []);
 
-  /* ── Fetch doctors once on mount ── */
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* On mount: fetch initial doctors data                                 */
+  /* ──────────────────────────────────────────────────────────────────── */
   useEffect(() => {
     getDoctorsData();
-  }, [getDoctorsData]);
+  }, [getDoctorsData]); // runs ONCE on mount (since getDoctorsData is wrapped in useCallback)
 
-  /* ── Fetch profile whenever token changes ──
-     - If we already have cached userData (shown instantly), this runs as a
-       silent background refresh.
-     - If there is no cache yet, it runs as a normal loading fetch.
-  */
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* Whenever token changes, validate with backend.                       */
+  /* userData is NEVER shown until this succeeds.                         */
+  /* ──────────────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (token && token !== "null") {
-      const hasCachedData = !!readCache();
-      loadUserProfileData(hasCachedData); // silent = true when cache exists
+    if (token) {
+      loadUserProfileData(token);
     } else {
+      // Token cleared → ensure UI shows Login button
       setUserData(null);
       setIsLoadingProfile(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]); // ONLY re-run when token changes — NOT on loadUserProfileData identity change
+  }, [token]); // Only re-run when token identity changes
 
-  /* ── Context value ── */
+  /* ──────────────────────────────────────────────────────────────────── */
+  /* Context value                                                         */
+  /* ──────────────────────────────────────────────────────────────────── */
   const value = {
     doctors,
     currencySymbol,
