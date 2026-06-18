@@ -1,0 +1,92 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - Appointment Booking Authentication Mismatch and Admin Port Connection 
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bugs exist
+  - **Scoped PBT Approach**: For deterministic bugs, scope the property to the concrete failing case(s) to ensure reproducibility
+  - Test appointment booking with valid JWT token where authUser middleware sets req.userId but bookAppointment controller expects userId from req.body
+  - Test admin panel connection attempt to localhost:5176 when Vite server runs on port 5174
+  - The test assertions should match the Expected Behavior Properties from design:
+    - Appointment with valid JWT should succeed (will fail on unfixed code with "userId required" error)
+    - Admin panel should be accessible on port 5176 (will fail on unfixed code with connection refused)
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bugs exist)
+  - Document counterexamples found to understand root cause:
+    - userId validation errors despite valid authentication
+    - Connection refused errors at expected port
+  - Mark task complete when test is written, run, and failure is documented
+  - _Requirements: 2.1, 2.2_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Non-Appointment API and Authentication Flow Behavior
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-appointment API calls:
+    - User authentication and login flows
+    - Doctor management operations
+    - User profile and admin dashboard functionality
+    - Other API endpoints (user routes, doctor routes, admin routes except appointment booking)
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements:
+    - Authentication flows must remain unchanged
+    - Doctor CRUD operations must remain unchanged  
+    - Non-appointment API endpoints must continue functioning
+    - Frontend routing and navigation must remain unchanged
+  - Property-based testing generates many test cases for stronger guarantees
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8_
+
+- [-] 3. Fix for appointment booking authentication mismatch and admin panel port issues
+
+  - [ ] 3.1 Implement the appointment controller fix
+    - Modify `backend/controllers/appointmentController.js` bookAppointment function
+    - Remove userId from req.body destructuring: change `const { userId, docId, slotDate, slotTime } = req.body;` to `const { docId, slotDate, slotTime } = req.body;`
+    - Extract userId from middleware authentication: add `const userId = req.userId;` after destructuring
+    - Add userId validation: ensure userId exists from authentication with proper error handling
+    - Add try-catch around userData fetching to handle cases where user doesn't exist
+    - Maintain existing userData fetching from database using the authenticated userId
+    - _Bug_Condition: isBugCondition(input) where input.requestType == 'appointment' AND input.requestData.hasValidJWT == true AND input.requestData.userIdInBody == undefined_
+    - _Expected_Behavior: expectedBehavior(result) where appointment booking succeeds with proper user data extraction from req.userId_
+    - _Preservation: Authentication flows, doctor management, and non-appointment functionality remain unchanged_
+    - _Requirements: 2.1, 2.2, 2.3_
+
+  - [ ] 3.2 Implement the admin panel port configuration fix  
+    - Modify `admin/vite.config.js` server configuration
+    - Change port from 5174 to 5176: update `server:{port:5174}` to `server:{port:5176}`
+    - Add host configuration for external connections: add `host: true` if needed for admin panel access
+    - _Bug_Condition: isBugCondition(input) where input.requestType == 'admin_access' AND input.requestData.expectedPort == 5176 AND input.requestData.actualPort == 5174_
+    - _Expected_Behavior: expectedBehavior(result) where admin panel is accessible on port 5176_
+    - _Preservation: Frontend application serving on port 5177 and backend API server on port 4000 remain unchanged_
+    - _Requirements: 2.1, 2.2_
+
+  - [ ] 3.3 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Appointment Booking with Authenticated User Data and Admin Panel Access
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied:
+      - Appointment booking with valid JWT succeeds with userId from req.userId
+      - Admin panel connects successfully on port 5176
+    - Run bug condition exploration test from step 1
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bugs are fixed)
+    - _Requirements: Expected Behavior Properties from design - successful appointment creation and admin panel access_
+
+  - [ ] 3.4 Verify preservation tests still pass
+    - **Property 2: Preservation** - Non-Appointment API and Authentication Flow Behavior
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2:
+      - User authentication and login flows
+      - Doctor management operations  
+      - Other API endpoints functionality
+      - Frontend routing and navigation
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix (no regressions to existing functionality)
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Verify appointment booking works with authenticated users
+  - Verify admin panel is accessible on correct port 5176
+  - Verify all existing functionality remains unchanged
+  - Run full test suite to confirm no regressions
+  - Ensure all tests pass, ask the user if questions arise

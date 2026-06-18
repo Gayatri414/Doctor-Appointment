@@ -210,12 +210,14 @@ const Navbar = () => {
                       onClick={() => {
                         // Check if admin is already logged in
                         const adminToken = localStorage.getItem('aToken');
+                        const adminPanelUrl = import.meta.env.VITE_ADMIN_PANEL_URL || 'http://localhost:5176';
+                        
                         if (adminToken) {
                           // Admin is logged in, go to dashboard
-                          window.location.href = 'http://localhost:5176/admin/dashboard';
+                          window.location.href = `${adminPanelUrl}/admin/dashboard`;
                         } else {
                           // Admin not logged in, go to login page
-                          window.location.href = 'http://localhost:5176/admin/login';
+                          window.location.href = `${adminPanelUrl}/admin/login`;
                         }
                         setShowDropdown(false);
                       }}
@@ -376,12 +378,14 @@ const Navbar = () => {
                   onClick={() => {
                     // Check if admin is already logged in
                     const adminToken = localStorage.getItem('aToken');
+                    const adminPanelUrl = import.meta.env.VITE_ADMIN_PANEL_URL || 'http://localhost:5176';
+                    
                     if (adminToken) {
                       // Admin is logged in, go to dashboard
-                      window.location.href = 'http://localhost:5176/admin/dashboard';
+                      window.location.href = `${adminPanelUrl}/admin/dashboard`;
                     } else {
                       // Admin not logged in, go to login page
-                      window.location.href = 'http://localhost:5176/admin/login';
+                      window.location.href = `${adminPanelUrl}/admin/login`;
                     }
                     setShowMenu(false);
                   }}

@@ -84,12 +84,19 @@ const Appointment = () => {
 
   // Book appointment function
   const bookAppointment = async () => {
+    console.log("=== FRONTEND BOOKING APPOINTMENT ===");
+    console.log("Token exists:", !!token);
+    console.log("Token preview:", token ? `${token.substring(0, 20)}...` : "null");
+    console.log("Backend URL:", backendUrl);
+    
     if (!token) {
+      console.log("❌ No token - redirecting to login");
       toast.warn('Login to book appointment');
       return navigate('/login');
     }
 
     if (!slotTime) {
+      console.log("❌ No slot time selected");
       return toast.warn('Select appointment slot');
     }
 
@@ -102,22 +109,46 @@ const Appointment = () => {
 
       const slotDate = day + "_" + month + "_" + year;
 
-      const { data } = await axios.post(backendUrl + '/api/appointment/book', {
+      const requestData = {
         docId,
         slotDate,
         slotTime
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      };
+      
+      const requestConfig = { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        } 
+      };
+
+      console.log("📤 Sending booking request:");
+      console.log("- URL:", backendUrl + '/api/appointment/book');
+      console.log("- Data:", requestData);
+      console.log("- Headers:", requestConfig.headers);
+
+      const { data } = await axios.post(
+        backendUrl + '/api/appointment/book', 
+        requestData,
+        requestConfig
+      );
+
+      console.log("📥 Booking response:", data);
 
       if (data.success) {
+        console.log("✅ Booking successful");
         toast.success(data.message);
         getDoctorsData();
         navigate('/my-appointments');
       } else {
+        console.log("❌ Booking failed:", data.message);
         toast.error(data.message);
       }
 
     } catch (error) {
-      console.error("Book appointment error:", error);
+      console.error("❌ Book appointment error:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
       toast.error(error.response?.data?.message || error.message);
     }
   };

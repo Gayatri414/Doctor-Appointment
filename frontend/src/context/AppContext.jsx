@@ -43,8 +43,14 @@ const AppContextProvider = (props) => {
   //  LOAD USER PROFILE
   const loadUserProfileData = useCallback(async () => {
     if (!token || isLoadingProfile) {
+      console.log("No token or already loading profile");
       return;
     }
+    
+    console.log("=== LOADING USER PROFILE ===");
+    console.log("Token exists:", !!token);
+    console.log("Token preview:", token ? `${token.substring(0, 20)}...` : "null");
+    console.log("Backend URL:", backendUrl);
     
     setIsLoadingProfile(true);
     
@@ -52,40 +58,69 @@ const AppContextProvider = (props) => {
       // Always use explicit headers instead of relying on global defaults
       const config = {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       };
       
+      console.log("Making profile API request...");
+      console.log("Request config:", config);
+      
       const response = await axios.get(backendUrl + '/api/user/profile', config);
+      
+      console.log("Profile API response:", response.data);
 
       if (response.data.success) {
+        console.log("✅ Profile loaded successfully");
         setUserData(response.data.user);
       } else {
-        toast.error(response.data.message);
+        console.log("❌ Profile API returned success: false");
+        console.log("Error message:", response.data.message);
+        toast.error(response.data.message || "Failed to load profile");
       }
 
     } catch (error) {
+      console.log("❌ Profile loading error:", error);
+      console.log("Error response:", error.response?.data);
+      console.log("Error status:", error.response?.status);
+      
       // Only clear auth state if it's a real authentication error
       // Don't clear on network errors or other issues
       if (error.response?.status === 401) {
         const errorMessage = error.response?.data?.message || "";
+        console.log("Authentication error detected:", errorMessage);
         
         // Only clear auth if it's actually a token issue
-        if (errorMessage.includes("expired") || errorMessage.includes("invalid") || errorMessage.includes("Not Authorized")) {
+        if (errorMessage.includes("expired") || 
+            errorMessage.includes("invalid") || 
+            errorMessage.includes("Not Authorized") ||
+            errorMessage.includes("authentication")) {
+          console.log("Clearing authentication due to token issue");
           localStorage.removeItem('token');
           setToken(null);
           setUserData(null);
           toast.error("Session expired. Please login again.");
         } else {
-          toast.error("Failed to load profile");
+          console.log("401 error but not token related");
+          toast.error("Authentication failed - please login again");
         }
+      } else if (error.response?.status === 404) {
+        console.log("User not found - clearing auth");
+        localStorage.removeItem('token');
+        setToken(null);
+        setUserData(null);
+        toast.error("Account not found. Please register again.");
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        console.log("Network error - not clearing auth");
+        toast.error("Network error - please check your connection");
       } else {
+        console.log("Other error - not clearing auth");
         toast.error("Failed to load profile");
       }
     } finally {
       setIsLoadingProfile(false);
     }
-  }, [token, backendUrl, isLoadingProfile]);
+  }, [token, backendUrl]);
 
   // Custom setToken function that handles both state and localStorage
   const setTokenAndStorage = useCallback((newToken) => {

@@ -6,13 +6,63 @@ import crypto from "crypto";
 // API to book appointment
 const bookAppointment = async (req, res) => {
   try {
-    const { userId, docId, slotDate, slotTime } = req.body;
+    console.log("=== APPOINTMENT BOOKING REQUEST ===");
+    console.log("Request body:", req.body);
+    console.log("req.userId from middleware:", req.userId);
+    console.log("req.body.userId:", req.body.userId);
+    console.log("Request headers:", req.headers);
+    
+    // Extract data from request - userId comes from auth middleware, not body
+    const { docId, slotDate, slotTime } = req.body;
+    const userId = req.userId; // Get from auth middleware instead of body
+    
+    // DEBUGGING: Log exact values
+    console.log("DEBUG VALUES:");
+    console.log("- docId:", docId);
+    console.log("- slotDate:", slotDate);
+    console.log("- slotTime:", slotTime);
+    console.log("- userId (from middleware):", userId);
+    console.log("- userId type:", typeof userId);
+    
+    // Validate authenticated user ID
+    if (!userId) {
+      console.log("❌ No userId found from authentication");
+      return res.json({ 
+        success: false, 
+        message: "Authentication required - please login again" 
+      });
+    }
+    
+    console.log("✓ Using authenticated userId:", userId);
 
-    // Get doctor and user data
-    const docData = await doctorModel.findById(docId).select("-password");
-    const userData = await userModel.findById(userId).select("-password");
+    // Get doctor and user data with error handling
+    let docData, userData;
+    
+    try {
+      console.log("🔍 Fetching doctor data for ID:", docId);
+      docData = await doctorModel.findById(docId).select("-password");
+      if (!docData) {
+        console.log("❌ Doctor not found for ID:", docId);
+        return res.json({ success: false, message: "Doctor not found" });
+      }
+      console.log("✓ Found doctor:", docData.name);
+      
+      console.log("🔍 Fetching user data for ID:", userId);
+      userData = await userModel.findById(userId).select("-password");
+      if (!userData) {
+        console.log("❌ User not found for ID:", userId);
+        return res.json({ success: false, message: "User not found - please login again" });
+      }
+      console.log("✓ Found user:", userData.name);
+      
+    } catch (dbError) {
+      console.log("❌ Database error:", dbError.message);
+      console.log("❌ Database error stack:", dbError.stack);
+      return res.json({ success: false, message: "Database error - please try again" });
+    }
 
     if (!docData.available) {
+      console.log("❌ Doctor not available:", docData.name);
       return res.json({ success: false, message: "Doctor Not Available" });
     }
 
@@ -21,6 +71,7 @@ const bookAppointment = async (req, res) => {
     // Check slot availability
     if (slots_booked[slotDate]) {
       if (slots_booked[slotDate].includes(slotTime)) {
+        console.log("❌ Slot already booked:", { slotDate, slotTime });
         return res.json({ success: false, message: "Slot Not Available" });
       } else {
         slots_booked[slotDate].push(slotTime);
@@ -30,7 +81,7 @@ const bookAppointment = async (req, res) => {
       slots_booked[slotDate].push(slotTime);
     }
 
-    // Create appointment data
+    // Create appointment data with debugging
     const appointmentData = {
       userId,
       docId,
@@ -42,16 +93,59 @@ const bookAppointment = async (req, res) => {
       date: Date.now(),
     };
 
+    console.log("=== APPOINTMENT DATA BEFORE SAVE ===");
+    console.log("appointmentData.userId:", appointmentData.userId);
+    console.log("appointmentData.userData:", appointmentData.userData ? "EXISTS" : "MISSING");
+    console.log("appointmentData.docId:", appointmentData.docId);
+    console.log("appointmentData.docData:", appointmentData.docData ? "EXISTS" : "MISSING");
+    console.log("Full appointmentData:", JSON.stringify(appointmentData, null, 2));
+
+    // Validate required fields before saving
+    if (!appointmentData.userId) {
+      console.log("❌ VALIDATION ERROR: userId is missing");
+      return res.json({ success: false, message: "User ID is required" });
+    }
+    
+    if (!appointmentData.userData) {
+      console.log("❌ VALIDATION ERROR: userData is missing");
+      return res.json({ success: false, message: "User data is required" });
+    }
+
     // Save appointment
+    console.log("📝 Creating new appointment model...");
     const newAppointment = new appointmentModel(appointmentData);
-    await newAppointment.save();
+    
+    console.log("💾 Saving appointment to database...");
+    const savedAppointment = await newAppointment.save();
+    console.log("✅ Appointment saved with ID:", savedAppointment._id);
 
     // Update doctor's slots
     await doctorModel.findByIdAndUpdate(docId, { slots_booked });
 
+    console.log("✅ Appointment booked successfully");
     res.json({ success: true, message: "Appointment Booked Successfully" });
+    
   } catch (error) {
-    console.log(error);
+    console.log("❌ Appointment booking error:", error);
+    console.log("❌ Error name:", error.name);
+    console.log("❌ Error message:", error.message);
+    console.log("❌ Error stack:", error.stack);
+    
+    // Check if it's a validation error
+    if (error.name === 'ValidationError') {
+      console.log("❌ Mongoose validation error:");
+      console.log("❌ Validation errors:", error.errors);
+      
+      const validationErrors = Object.keys(error.errors).map(key => {
+        return `${key}: ${error.errors[key].message}`;
+      });
+      
+      return res.json({ 
+        success: false, 
+        message: `Validation failed: ${validationErrors.join(', ')}`
+      });
+    }
+    
     res.json({ success: false, message: error.message });
   }
 };
@@ -59,12 +153,21 @@ const bookAppointment = async (req, res) => {
 // API to get user appointments
 const listAppointment = async (req, res) => {
   try {
-    const { userId } = req.body;
+    console.log("=== LIST APPOINTMENTS REQUEST ===");
+    console.log("Authenticated userId from middleware:", req.userId);
+    
+    const userId = req.userId; // Get from auth middleware
+    
+    if (!userId) {
+      return res.json({ success: false, message: "Authentication required" });
+    }
+    
     const appointments = await appointmentModel.find({ userId });
+    console.log(`✓ Found ${appointments.length} appointments for user`);
 
     res.json({ success: true, appointments });
   } catch (error) {
-    console.log(error);
+    console.log("❌ List appointments error:", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -72,12 +175,26 @@ const listAppointment = async (req, res) => {
 // API to cancel appointment
 const cancelAppointment = async (req, res) => {
   try {
-    const { userId, appointmentId } = req.body;
+    console.log("=== CANCEL APPOINTMENT REQUEST ===");
+    console.log("Request body:", req.body);
+    console.log("Authenticated userId from middleware:", req.userId);
+    
+    const { appointmentId } = req.body;
+    const userId = req.userId; // Get from auth middleware
+    
+    if (!userId) {
+      return res.json({ success: false, message: "Authentication required" });
+    }
 
     const appointmentData = await appointmentModel.findById(appointmentId);
+    
+    if (!appointmentData) {
+      return res.json({ success: false, message: "Appointment not found" });
+    }
 
     // Verify appointment user
     if (appointmentData.userId !== userId) {
+      console.log("❌ Unauthorized cancellation attempt");
       return res.json({ success: false, message: "Unauthorized action" });
     }
 
@@ -99,9 +216,10 @@ const cancelAppointment = async (req, res) => {
 
     await doctorModel.findByIdAndUpdate(docId, { slots_booked });
 
+    console.log("✅ Appointment cancelled successfully");
     res.json({ success: true, message: "Appointment Cancelled" });
   } catch (error) {
-    console.log(error);
+    console.log("❌ Cancel appointment error:", error);
     res.json({ success: false, message: error.message });
   }
 };

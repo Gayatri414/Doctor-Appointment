@@ -161,28 +161,44 @@ const getProfile = async (req, res) => {
     try {
         console.log("=== PROFILE API HIT ===");
         console.log("REQUEST USER ID:", req.userId);
+        console.log("Request headers:", req.headers);
         
         if (!req.userId) {
             console.log("❌ No userId found in request");
-            return res.status(400).json({
+            return res.status(401).json({
                 success: false,
-                message: "User ID not found in request"
+                message: "User ID not found in request - authentication required"
             });
         }
 
         console.log("🔍 Searching for user with ID:", req.userId);
+        
+        // Validate ObjectId format
+        if (!/^[0-9a-fA-F]{24}$/.test(req.userId)) {
+            console.log("❌ Invalid user ID format");
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID format"
+            });
+        }
+        
         const userData = await userModel.findById(req.userId).select('-password');
 
         if (!userData) {
-            console.log("❌ User not found in database");
+            console.log("❌ User not found in database for ID:", req.userId);
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "User account not found - please register again"
             });
         }
 
         console.log("✅ User found successfully");
-        console.log("User data:", { name: userData.name, email: userData.email });
+        console.log("User data:", { 
+            id: userData._id,
+            name: userData.name, 
+            email: userData.email,
+            hasImage: !!userData.image
+        });
 
         res.status(200).json({
             success: true,
@@ -191,9 +207,19 @@ const getProfile = async (req, res) => {
 
     } catch (error) {
         console.log("❌ Profile API error:", error);
+        console.log("Error stack:", error.stack);
+        
+        // More specific error handling
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID format"
+            });
+        }
+        
         res.status(500).json({
             success: false,
-            message: error.message
+            message: "Server error while loading profile"
         });
     }
 };

@@ -27,6 +27,9 @@ const App = () => {
     <>
       <Routes>
         {/* Public Login Routes */}
+        <Route path="/login" element={
+          aToken ? <Navigate to="/admin/dashboard" replace /> : <Login />
+        } />
         <Route path="/admin/login" element={
           aToken ? <Navigate to="/admin/dashboard" replace /> : <Login />
         } />
