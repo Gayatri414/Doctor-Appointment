@@ -7,46 +7,32 @@
  Live link=doctor-appointment-three-beige.vercel.app
  # Frontend
 
-## Home Page
-![](screenshots/home-page.png)
+# Frontend
 
-## Doctors Page
-![](screenshots/doctors-page.png)
+![](screenshots/Screenshot%202026-06-18%20183913.png)
 
-## Doctor Appointment Page
-![](screenshots/appointment-page.png)
+![](screenshots/Screenshot%202026-06-18%20183949.png)
 
-## Login Page
-![](screenshots/login-page.png)
+![](screenshots/Screenshot%202026-06-18%20184008.png)
 
-## Registration Page
-![](screenshots/register-page.png)
+![](screenshots/Screenshot%202026-06-18%20184026.png)
 
-## My Appointments
-![](screenshots/my-appointments.png)
+![](screenshots/Screenshot%202026-06-18%20184042.png)
 
-## User Profile
-![](screenshots/profile-page.png)
- 
 
 ### Admin Deployment (Vercel)
  Live link=doctor-appointment-7p5d.vercel.app
  # Admin Panel
 
-## Dashboard
-![Dashboard](screenshots/Screenshot%202026-06-18%20182653.png)
+![](screenshots/Screenshot%202026-06-18%20182653.png)
 
-## Appointments
-![Appointments](screenshots/Screenshot%202026-06-18%20182723.png)
+![](screenshots/Screenshot%202026-06-18%20182723.png)
 
-## Add Doctor
-![Add Doctor](screenshots/Screenshot%202026-06-18%20182746.png)
+![](screenshots/Screenshot%202026-06-18%20182746.png)
 
-## Doctors List
-![Doctors List](screenshots/Screenshot%202026-06-18%20182809.png)
+![](screenshots/Screenshot%202026-06-18%20182809.png)
 
-## Admin Profile
-![Admin Profile](screenshots/Screenshot%202026-06-18%20182828.png)
+![](screenshots/Screenshot%202026-06-18%20182828.png)
    
 
 
