@@ -19,6 +19,10 @@
 
 ![](screenshots/Screenshot%202026-06-18%20184042.png)
 
+![](screenshots/Screenshot%202026-06-18%20220303.png)
+
+![](screenshots/Screenshot%202026-06-18%20220318.png)
+
 
 ### Admin Deployment (Vercel)
  Live link=doctor-appointment-7p5d.vercel.app
