@@ -16,8 +16,18 @@ const MyAppointment = () => {
 
   // Function to format the date eg. ( 20_01_2000 => 20 Jan 2000 )
   const slotDateFormat = (slotDate) => {
+    if (!slotDate || typeof slotDate !== 'string') return 'Invalid Date';
+    
     const dateArray = slotDate.split('_');
-    return dateArray[0] + " " + months[Number(dateArray[1])] + " " + dateArray[2];
+    if (dateArray.length !== 3) return slotDate;
+    
+    const day = dateArray[0];
+    const monthIndex = parseInt(dateArray[1]);
+    const year = dateArray[2];
+    
+    if (monthIndex < 1 || monthIndex > 12) return slotDate;
+    
+    return `${day} ${months[monthIndex]} ${year}`;
   };
 
   // Getting user appointments data from Database
@@ -28,11 +38,16 @@ const MyAppointment = () => {
       });
 
       if (data.success) {
-        setAppointments(data.appointments.reverse());
+        // Ensure appointments is always an array
+        const appointmentsList = Array.isArray(data.appointments) ? data.appointments : [];
+        setAppointments(appointmentsList.reverse());
+      } else {
+        setAppointments([]);
       }
     } catch (error) {
       console.error("Get appointments error:", error);
       toast.error(error.response?.data?.message || error.message);
+      setAppointments([]); // Set to empty array on error
     }
   };
 
@@ -119,7 +134,7 @@ const MyAppointment = () => {
       {/* Appointments List */}
       <div className="flex flex-col gap-6">
 
-        {appointments.length === 0 ? (
+        {!Array.isArray(appointments) || appointments.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center shadow-sm">
             <div className="text-6xl mb-4">📅</div>
             <h3 className="text-xl font-semibold mb-2">No Appointments Found</h3>
