@@ -32,7 +32,7 @@ const AdminContextProvider = ({ children }) => {
             setAToken('');
             setAdminData(null);
             toast.error("Admin session expired. Please login again.");
-            window.location.href = '/admin/login';
+            window.location.href = '/login';
           }
         }
         return Promise.reject(error);
@@ -63,13 +63,24 @@ const AdminContextProvider = ({ children }) => {
         setAdminData(data.admin);
       } else {
         toast.error(data.message);
+        localStorage.removeItem("aToken");
+        setAToken("");
+        setAdminData(null);
+        window.location.href = '/login';
       }
 
     } catch (error) {
       console.error("Load admin profile error:", error);
-      // Don't show error toast for token expiration as interceptor handles it
-      if (!error.response?.data?.message?.includes('expired')) {
-        toast.error(error.response?.data?.message || "Failed to load admin profile");
+      const status = error.response?.status;
+      if (status === 401 || status === 403 || status === 404) {
+        localStorage.removeItem("aToken");
+        setAToken("");
+        setAdminData(null);
+        window.location.href = '/login';
+      } else if (!error.response) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error("Failed to load admin profile");
       }
     } finally {
       setIsLoadingAdmin(false);

@@ -11,6 +11,7 @@ userRouter.post('/login', loginUser)
 
 // Protected routes
 userRouter.get('/profile', authUser, getProfile)
+userRouter.get('/get-profile', authUser, getProfile)
 
 userRouter.put(
   '/profile',

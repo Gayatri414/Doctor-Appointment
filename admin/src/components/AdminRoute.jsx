@@ -7,7 +7,7 @@ const AdminProtectedRoute = ({ children }) => {
   
   // If no admin token, redirect to admin login
   if (!aToken) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;

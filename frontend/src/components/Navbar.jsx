@@ -111,38 +111,8 @@ const Navbar = () => {
         {/* Right Side */}
         <div className='flex items-center gap-4 relative' ref={dropdownRef}>
 
-          {/* NOT Logged In */}
-          {!token ? (
-            <motion.button 
-              onClick={() => navigate('/login')}
-              className='bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-full hidden md:block font-semibold shadow-lg relative overflow-hidden group'
-              {...buttonHover}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-            >
-              {/* Shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <span className="relative z-10">Create Account</span>
-            </motion.button>
-          ) : isLoadingProfile && !userData ? (
-            /* ── Skeleton — only shown when token exists but NO cache yet ── */
-            <motion.div
-              className='hidden md:flex items-center gap-3 bg-gray-800/50 rounded-full px-4 py-2 backdrop-blur-sm border border-gray-700/50'
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-            >
-              {/* Avatar skeleton */}
-              <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden relative">
-                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
-              </div>
-              {/* Name skeleton */}
-              <div className="h-3 w-20 rounded-full bg-gray-700 overflow-hidden relative">
-                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
-              </div>
-            </motion.div>
-          ) : (
+          {/* User Auth Section */}
+          {token && userData ? (
             <motion.div 
               className='hidden md:flex items-center gap-3 cursor-pointer bg-gray-800/50 rounded-full px-4 py-2 backdrop-blur-sm border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300'
               onClick={() => setShowDropdown(prev => !prev)}
@@ -249,6 +219,31 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
             </motion.div>
+          ) : (
+            <div className="hidden md:flex items-center gap-4">
+              <motion.button 
+                onClick={() => navigate('/login', { state: { mode: 'Login' } })}
+                className='text-gray-300 hover:text-white px-4 py-2 rounded-full font-semibold transition-all duration-200'
+                {...buttonHover}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+              >
+                Login
+              </motion.button>
+              <motion.button 
+                onClick={() => navigate('/login', { state: { mode: 'Sign Up' } })}
+                className='bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-full font-semibold shadow-lg relative overflow-hidden group'
+                {...buttonHover}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+              >
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                <span className="relative z-10">Create Account</span>
+              </motion.button>
+            </div>
           )}
 
           {/* Hamburger */}
@@ -328,42 +323,7 @@ const Navbar = () => {
             </ul>
 
             {/* Mobile Auth */}
-            {!token ? (
-              <motion.button  
-                onClick={() => {
-                  setShowMenu(false);
-                  navigate('/login');
-                }}
-                className='mt-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-full w-full font-semibold shadow-lg'
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Create Account
-              </motion.button>
-            ) : isLoadingProfile && !userData ? (
-              /* ── Mobile skeleton ── */
-              <motion.div
-                className='mt-8 bg-gray-800/50 px-6 py-4 rounded-2xl w-full flex items-center gap-4'
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.4 }}
-              >
-                <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0 overflow-hidden relative">
-                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-28 rounded-full bg-gray-700 overflow-hidden relative">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
-                  </div>
-                  <div className="h-2.5 w-36 rounded-full bg-gray-700/70 overflow-hidden relative">
-                    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-gray-600/40 to-transparent" />
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
+            {token && userData ? (
               <div className="space-y-4 mt-8">
                 {/* User Info */}
                 {userData?.name && (
@@ -430,6 +390,37 @@ const Navbar = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   Logout
+                </motion.button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 mt-8">
+                <motion.button  
+                  onClick={() => {
+                    setShowMenu(false);
+                    navigate('/login', { state: { mode: 'Login' } });
+                  }}
+                  className='bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 text-white px-6 py-3 rounded-full w-full font-semibold'
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.4 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Login
+                </motion.button>
+                <motion.button  
+                  onClick={() => {
+                    setShowMenu(false);
+                    navigate('/login', { state: { mode: 'Sign Up' } });
+                  }}
+                  className='bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-full w-full font-semibold shadow-lg'
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 0.4 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Create Account
                 </motion.button>
               </div>
             )}

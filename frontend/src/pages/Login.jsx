@@ -1,21 +1,28 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";   
+import { useNavigate, useLocation } from "react-router-dom";   
 
 const Login = () => {
 
   const { backendUrl, setToken } = useContext(AppContext);
   const navigate = useNavigate();   
+  const location = useLocation();
 
-  const [state, setState] = useState("Sign Up");
+  const [state, setState] = useState(location.state?.mode || "Sign Up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.mode) {
+      setState(location.state.mode);
+    }
+  }, [location.state]);
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
