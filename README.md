@@ -1,7 +1,5 @@
 
 
-### Backend Deployment (Render)
- Live Link=https://doctor-backend-p3mq.onrender.com
 
 ### Frontend Deployment (Vercel)
  Live link=doctor-appointment-three-beige.vercel.app
@@ -37,6 +35,10 @@
 ![](screenshots/Screenshot%202026-06-18%20182809.png)
 
 ![](screenshots/Screenshot%202026-06-18%20182828.png)
+
+### Backend Deployment (Render)
+ Live Link=https://doctor-backend-p3mq.onrender.com
+
    
 
 
