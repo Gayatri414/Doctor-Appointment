@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
     steps:
     - name: Checkout repository
@@ -39,14 +41,14 @@ jobs:
 
     # The following steps run on push to main/master to deploy/push to Docker Hub (CD)
     - name: Log in to Docker Hub
-      if: github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME != ''
+      if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build and Push Backend Image
-      if: github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME != ''
+      if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
       uses: docker/build-push-action@v5
       with:
         context: ./backend
@@ -57,7 +59,7 @@ jobs:
           ${{ secrets.DOCKERHUB_USERNAME }}/prescripto-backend:${{ github.sha }}
 
     - name: Build and Push Frontend Image
-      if: github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME != ''
+      if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
       uses: docker/build-push-action@v5
       with:
         context: ./frontend
@@ -71,7 +73,7 @@ jobs:
           ${{ secrets.DOCKERHUB_USERNAME }}/prescripto-frontend:${{ github.sha }}
 
     - name: Build and Push Admin Image
-      if: github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME != ''
+      if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
       uses: docker/build-push-action@v5
       with:
         context: ./admin
