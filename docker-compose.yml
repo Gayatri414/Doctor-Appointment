@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Node.js + Express backend server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-4000}:4000"
+    env_file:
+      - ./backend/.env
+    restart: always
+
+  # React + Vite frontend user client (served via Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:4000}
+        - VITE_ADMIN_PANEL_URL=${VITE_ADMIN_PANEL_URL:-http://localhost:5174}
+    ports:
+      - "5173:80"
+    restart: always
+    depends_on:
+      - backend
+
+  # React + Vite admin dashboard (served via Nginx)
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:4000}
+    ports:
+      - "5174:80"
+    restart: always
+    depends_on:
+      - backend
